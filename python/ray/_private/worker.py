@@ -60,7 +60,6 @@ import ray.job_config
 import ray.remote_function
 from ray import ActorID, JobID, Language, ObjectRef
 from ray._common import ray_option_utils
-from ray._common.constants import RAY_WARN_BLOCKING_GET_INSIDE_ASYNC_ENV_VAR
 from ray._common.utils import load_class
 from ray._private.client_mode_hook import client_mode_hook
 from ray._private.custom_types import TensorTransportEnum
@@ -2913,17 +2912,13 @@ def get(
     if hasattr(worker, "core_worker") and worker.core_worker.current_actor_is_asyncio():
         global blocking_get_inside_async_warned
         if not blocking_get_inside_async_warned:
-            if ray_constants.env_bool(
-                RAY_WARN_BLOCKING_GET_INSIDE_ASYNC_ENV_VAR,
-                True,
-            ):
-                logger.warning(
-                    "Using blocking ray.get inside async actor. "
-                    "This blocks the event loop. Please use `await` "
-                    "on object ref with asyncio.gather if you want to "
-                    "yield execution to the event loop instead."
-                )
-                blocking_get_inside_async_warned = True
+            logger.warning(
+                "Using blocking ray.get inside async actor. "
+                "This blocks the event loop. Please use `await` "
+                "on object ref with asyncio.gather if you want to "
+                "yield execution to the event loop instead."
+            )
+            blocking_get_inside_async_warned = True
 
     with profiling.profile("ray.get"):
         # TODO(sang): Should make ObjectRefGenerator
